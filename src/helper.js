@@ -7,10 +7,12 @@ var os = require("os");
 var fs = require("fs");
 var net = require("net");
 var bcrypt = require("bcryptjs");
+const colors = require("colors/safe");
 
 var Helper = {
 	config: null,
 	expandHome: expandHome,
+	getStoragePath: getStoragePath,
 	getUserConfigPath: getUserConfigPath,
 	getUserLogsPath: getUserLogsPath,
 	setHome: setHome,
@@ -58,14 +60,20 @@ function getGitCommit() {
 }
 
 function setHome(homePath) {
-	this.HOME = expandHome(homePath || "~/.lounge");
+	this.HOME = expandHome(homePath);
 	this.CONFIG_PATH = path.join(this.HOME, "config.js");
 	this.USERS_PATH = path.join(this.HOME, "users");
 
 	// Reload config from new home location
 	if (fs.existsSync(this.CONFIG_PATH)) {
 		var userConfig = require(this.CONFIG_PATH);
-		this.config = _.extend(this.config, userConfig);
+		this.config = _.merge(this.config, userConfig);
+	}
+
+	if (!this.config.displayNetwork && !this.config.lockNetwork) {
+		this.config.lockNetwork = true;
+
+		log.warn(`${colors.bold("displayNetwork")} and ${colors.bold("lockNetwork")} are false, setting ${colors.bold("lockNetwork")} to true.`);
 	}
 
 	// TODO: Remove in future release
@@ -81,6 +89,10 @@ function getUserConfigPath(name) {
 
 function getUserLogsPath(name, network) {
 	return path.join(this.HOME, "logs", name, network);
+}
+
+function getStoragePath() {
+	return path.join(this.HOME, "storage");
 }
 
 function ip2hex(address) {
@@ -101,18 +113,11 @@ function ip2hex(address) {
 }
 
 function expandHome(shortenedPath) {
-	var home;
-
-	if (os.homedir) {
-		home = os.homedir();
+	if (!shortenedPath) {
+		return "";
 	}
 
-	if (!home) {
-		home = process.env.HOME || "";
-	}
-
-	home = home.replace("$", "$$$$");
-
+	const home = os.homedir().replace("$", "$$$$");
 	return path.resolve(shortenedPath.replace(/^~($|\/|\\)/, home + "$1"));
 }
 

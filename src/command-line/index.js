@@ -10,10 +10,28 @@ var path = require("path");
 var Helper = require("../helper");
 
 program.version(Helper.getVersion(), "-v, --version")
-	.option("--home <path>", "path to configuration folder")
+	.option("--home <path>", `${colors.bold("[DEPRECATED]")} Use the ${colors.green("LOUNGE_HOME")} environment variable instead.`)
 	.parseOptions(process.argv);
 
-Helper.setHome(program.home || process.env.LOUNGE_HOME);
+if (program.home) {
+	log.warn(`${colors.green("--home")} is ${colors.bold("deprecated")} and will be removed in a future version.`);
+	log.warn(`Use the ${colors.green("LOUNGE_HOME")} environment variable instead.`);
+}
+
+let home = program.home || process.env.LOUNGE_HOME;
+
+if (!home) {
+	const distConfig = path.resolve(path.join(
+		__dirname,
+		"..",
+		"..",
+		".lounge_home"
+	));
+
+	home = fs.readFileSync(distConfig, "utf-8").trim();
+}
+
+Helper.setHome(home);
 
 if (!fs.existsSync(Helper.CONFIG_PATH)) {
 	fsextra.ensureDirSync(Helper.HOME);
