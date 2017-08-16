@@ -71,6 +71,12 @@ module.exports = function(irc, network) {
 			// Query messages (unless self) always highlight
 			if (chan.type === Chan.Type.QUERY) {
 				highlight = !self;
+			} else if (chan.type === Chan.Type.CHANNEL) {
+				const user = chan.findUser(data.nick);
+
+				if (user) {
+					user.lastMessage = data.time || Date.now();
+				}
 			}
 		}
 
@@ -89,11 +95,12 @@ module.exports = function(irc, network) {
 			self: self,
 			highlight: highlight
 		});
-		chan.pushMessage(client, msg, !self);
 
 		// No prefetch URLs unless are simple MESSAGE or ACTION types
 		if ([Msg.Type.MESSAGE, Msg.Type.ACTION].indexOf(data.type) !== -1) {
 			LinkPrefetch(client, chan, msg);
 		}
+
+		chan.pushMessage(client, msg, !self);
 	}
 };

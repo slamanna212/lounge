@@ -1,8 +1,10 @@
 node_modules/
 npm-debug.log
+package-lock.json
 
 .nyc_output/
 coverage/
+test/fixtures/.lounge/storage/
 
 # Built assets created at npm install/prepublish time
 # See https://docs.npmjs.com/misc/scripts
